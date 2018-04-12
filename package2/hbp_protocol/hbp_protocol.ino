@@ -6,7 +6,6 @@ const unsigned int secPar = 128;
 /** keys in {0,1}^k **/
 boolean key1[secPar], key2[secPar];
 
-
 /** epsilon in (0, 0.5), supports up to two decimals **/
 float eps = 0.1;
 
@@ -40,7 +39,7 @@ void loop() {
   Serial.println();
 
   hbTest();
-  delay(2000);
+  delay(1000);
 }
 
 /**
@@ -131,7 +130,7 @@ boolean dotProduct (boolean x[], boolean y[], unsigned int k) {
 }
 
 boolean generateNoiseBit() {
-  long rand = random (1, 100);
+  long rand = random(100);
   boolean v = rand < eps*100;
 
   return v;
