@@ -54,7 +54,7 @@ void authTest() {
 
   /* Abort if Hamming Weight of v is not l */
   if(hammingWeight(v, 2*l) != l) {
-    Serial.println("Abort, Hamming Wweight of v is not l.");
+    Serial.println("Abort, Hamming Weight of v is not l.");
     return;
   }
 
@@ -75,12 +75,14 @@ void authTest() {
 
   transposeMatrix(rt, r);
 
-  /* Compute candidate_v in {0,1}^l which is derived from the key candidate by deleting all entries candidate[i] where v[i] = 0.*/
+  /* Compute candidate_v in {0,1}^l which is derived from the key candidate by
+    deleting all entries candidate[i] where v[i] = 0.*/
 
   boolean candidate_v[l];
   delete_v(&candidate_v[0], candidate, v);
 
-  /* Compute z = R^T * candidate_v XOR e in {0,1}^n with R^T in {0,1}^(nxl) and candidate_v in {0,1}^l. */
+  /* Compute z = R^T * candidate_v XOR e in {0,1}^n with R^T in {0,1}^(nxl) and
+    candidate_v in {0,1}^l. */
   boolean z[n] = {0};
 
   matrixVectorProduct(&z[0], rt, candidate_v);
@@ -92,7 +94,8 @@ void authTest() {
 
   /* __________ VERIFIER __________ */
 
-  /* /* Compute s_v in {0,1}^l which is derived from the key by deleting all entries s[i] where v[i] = 0.*/
+  /* Compute s_v in {0,1}^l which is derived from the key by deleting all
+    entries s[i] where v[i] = 0.*/
 
   boolean s_v[l];
   delete_v(&s_v[0], s, v);

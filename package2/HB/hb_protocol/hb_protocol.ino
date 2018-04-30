@@ -3,8 +3,8 @@
 /** key length k (80 or 128) **/
 const unsigned int secPar = 128;
 
-/** keys in {0,1}^k **/
-boolean key1[secPar], key2[secPar];
+/** key in {0,1}^k **/
+boolean key[secPar];
 
 /** epsilon in (0, 0.5), supports up to two decimals **/
 float eps = 0.1;
@@ -20,26 +20,16 @@ void setup() {
 }
 
 void loop() {
-  Serial.print("Key 1 of length ");
+  Serial.print("Key of length ");
   Serial.print(secPar);
   Serial.println(": ");
   for(int i=0; i<secPar; i++) {
-    Serial.print(key1[i]);
+    Serial.print(key[i]);
   }
-
-  Serial.println();
-
-  Serial.print("Key 2 of length ");
-  Serial.print(secPar);
-  Serial.println(": ");
-  for(int i=0; i<secPar; i++) {
-    Serial.print(key2[i]);
-  }
-
   Serial.println();
 
   hbTest();
-  delay(1000);
+  delay(2000);
 }
 
 /**
@@ -51,15 +41,11 @@ void hbTest() {
   int counter=0;
 
   /* generate candidate key */
-  boolean candidate1[secPar], candidate2[secPar];
-  generateKey1(&candidate1[0]); //prints TRUE KEY or RANDOM KEY
-  generateKey2(&candidate2[0]);
+  boolean candidate[secPar];
+  generateKey(&candidate[0]); //prints TRUE KEY or RANDOM KEY
 
   /* n iterations of HB */
   for(int i=0; i<n; i++) {
-
-    /* random blinding factor b in {0,1}^k */
-    boolean b[secPar];
 
     /* random challenge a in {0,1}^k */
     boolean a[secPar];
@@ -67,21 +53,16 @@ void hbTest() {
     /* response z in {0, 1} */
     boolean z;
 
-    /* choose random blinding factor b */
-    for(int i=0; i<secPar; i++) {
-      b[i] = (boolean) random(2);
-    }
-
     /* choose random challenge a */
     for(int i=0; i<secPar; i++) {
       a[i] = (boolean) random(2);
     }
 
-    /* get z as candidate1*b XOR candidate2*a XOR v */
-    z = dotProduct(candidate1, b, secPar)^dotProduct(candidate2, a,secPar)^generateNoiseBit();
+    /* get z as candidate*a XOR v */
+    z = getZ(candidate, a, secPar);
 
-    /* check if z = candidate1*b XOR candidate2*a XOR v ?= key1*b XOR key2*a */
-    if(z != dotProduct(key1, b, secPar)^dotProduct(key2, a, secPar)) {
+    /* check if z = candidate* XOR v ?= key*a */
+    if(z != dotProduct(key, a, secPar)) {
       counter++;
     }
 
@@ -111,8 +92,7 @@ void hbTest() {
 **/
 void initializeKey(){
   for(int i=0; i<secPar; i++) {
-    key1[i] = (boolean) random(2);
-    key2[i] = (boolean) random(2);
+    key[i] = (boolean) random(2);
   }
 }
 
@@ -129,55 +109,36 @@ boolean dotProduct (boolean x[], boolean y[], unsigned int k) {
   return sum;
 }
 
-boolean generateNoiseBit() {
-  long rand = random(100);
+/**
+  Computes a noisy dot product of two vectors x and y in {0,1}^k mod 2 with probability eps of the result bit being flipped.
+**/
+boolean getZ(boolean x[], boolean y[], unsigned int k){
+  long rand = random (1, 100);
   boolean v = rand < eps*100;
 
-  return v;
+  boolean product = dotProduct(x, y, k);
+
+  return product^v;
 }
 
 /**
-  Generates either a random key1 or true key1 with probability of 0.5 for each.
+  Generates either a random key or true key with probability of 0.5 for each.
 **/
-void generateKey1(boolean *x){
+void generateKey(boolean *x){
 
   long r = random(2);
   //static boolean x[secPar];
   if(r == 0) {
-    Serial.println("RANDOM KEY 1: ");
+    Serial.println("RANDOM KEY: ");
     for(int i=0; i<secPar; i++) {
       x[i] = (boolean) random(2);
       Serial.print(x[i]);
     }
   }
   else {
-    Serial.println("TRUE KEY 1: ");
+    Serial.println("TRUE KEY: ");
     for(int i=0; i<secPar; i++) {
-      x[i] = key1[i];
-      Serial.print(x[i]);
-    }
-  }
-  Serial.println();
-}
-
-/**
-  Generates either a random key2 or true key2 with probability of 0.5 for each.
-**/
-void generateKey2(boolean *x){
-
-  long r = random(2);
-  //static boolean x[secPar];
-  if(r == 0) {
-    Serial.println("RANDOM KEY 2: ");
-    for(int i=0; i<secPar; i++) {
-      x[i] = (boolean) random(2);
-      Serial.print(x[i]);
-    }
-  }
-  else {
-    Serial.println("TRUE KEY 2: ");
-    for(int i=0; i<secPar; i++) {
-      x[i] = key2[i];
+      x[i] = key[i];
       Serial.print(x[i]);
     }
   }
