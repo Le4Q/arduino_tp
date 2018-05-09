@@ -1,10 +1,9 @@
-// Version 3 with parallelization (see auth-mac.pdf, p9, 10)
 
 /* key length k (80 or 128) */
-const size_t secPar = 128; // = l
+const size_t secPar = 128;
 
 /* key size in Bytes */
-const size_t keySize = secPar/8; // = 16 for secPar = 128
+const size_t keySize = secPar/8;
 
 /* key in {0,1}^k */
 uint8_t key[keySize];
@@ -13,96 +12,100 @@ uint8_t key[keySize];
 float eps = 0.1;
 
 /* iterations n */
-int n = 80;
+int n = 10;
 
 void setup() {
+
   initializeKey();
-  Serial.begin (9600) ;
+  Serial.begin (9600);
+  Serial.setTimeout(10000);
+
+  while(!Serial) {;}
+
 }
 
 void loop() {
-  Serial.print("Key of length ");
-  Serial.print(secPar);
-  Serial.println(": ");
-  printBitString(&key[0], keySize);
-  Serial.println();
 
-  hbTest();
-  delay(1000);
+  hbReader();
+
 }
 
-/*
- * Simulation of HB protocol using either a random key or the true key with
- * probability of 0.5 each.
- */
-void hbTest() {
+void hbReader() {
 
-  /* counter for unsuccessful iteration */
-  int counter=0;
-
-  /* generate candidate key */
-  uint8_t candidate[keySize];
-
-  generateKey(&candidate[0]); //prints TRUE KEY or RANDOM KEY
-
-  /* random challenges R in {0,1}^nxl each column being one challenge*/
+  /* Send challenge R in {0,1}^nxl */
   uint8_t r[n][keySize];
+
+  long sent = 0;
 
   for(int i=0; i<n; i++) {
     for(int j=0; j<keySize; j++) {
       r[i][j] = random(256);
     }
   }
+  /*
+  for(int i=0; i<n; i++) {
+    sent += Serial.write(r[i], keySize);
+  }
 
-  /* Calculate response vector z in {0,1}^n as z = r * candidate XOR e */
-  size_t zsize = n/8 + ((n % 8) != 0);
+  Serial.println("Number of Bytes of R sent: ");
+  Serial.println(sent);
+  */
+  delay(100);
 
-  uint8_t z[zsize] = {0};
+  /* ======================================================================*/
 
-  for(int i=0; i<zsize; i++) {
-    for(int j=0; j<8; j++) {
-      if((i+1)*j < n) {
+  if(Serial.available() > 0) {
 
-        setBit(&z[i], j, getZ(candidate, r[i*8+j], keySize));
-        /*
-        if(getBit(z[i], j) != dotProduct(key, r[(i+1)*j], keySize)) {
-          counter++;
+    /* Receive z in {0,1}^n */
+    size_t zsize = n/8 + ((n % 8) != 0);
+    uint8_t z[zsize];
+
+    int counter = 0;
+
+    size_t read;
+
+    if (Serial.available()) {
+      read = Serial.readBytes(z, zsize);
+    }
+
+    Serial.println("Number of Bytes of R sent: ");
+    Serial.println(read);
+
+    /* check condition, increse counter if unsuccessful*/
+    for(int i=0; i<zsize; i++) {
+      for(int j=0; j<8; j++) {
+        if((i+1)*j < n) {
+          if(getBit(z[i], j) != dotProduct(key, r[i*8+j], keySize)) {
+            counter++;
+          }
         }
-        */
       }
     }
-  }
 
-  /* check condition, increse counter if unsuccessful*/
-  for(int i=0; i<zsize; i++) {
-    for(int j=0; j<8; j++) {
-      if((i+1)*j < n) {
-        if(getBit(z[i], j) != dotProduct(key, r[i*8+j], keySize)) {
-          counter++;
-        }
-      }
+    /* ======================================================================*/
+
+    /* Print message depending on whether authentication was successful. */
+    String s;
+    if(counter<=(eps*n)) {
+      s = "Authentication ACCEPTED";
     }
+    else
+    {
+      s = "Authentication REJECTED";
+    }
+
+    Serial.println(s);
+    Serial.print("Unsuccessful iterations: ");
+    Serial.print(counter);
+    Serial.print(" / ");
+    Serial.println(n);
+    Serial.println("==========================================================");
+
   }
-
-  /* Print message depending on whether authentication was successful. */
-  String s;
-  if(counter<=(eps*n)) {
-    s = "Authentication ACCEPTED";
-  } else {
-    s = "Authentication REJECTED";
-  }
-
-  Serial.println(s);
-  Serial.print("Unsuccessful iterations: ");
-  Serial.print(counter);
-  Serial.print(" / ");
-  Serial.println(n);
-  Serial.println("==========================================================");
-
 }
 
 /*
- * Initializes the key during setup.
+ *  Initializes the key during setup.
  */
 void initializeKey()
 {
