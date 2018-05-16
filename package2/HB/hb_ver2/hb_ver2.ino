@@ -1,30 +1,42 @@
-// Version 2 with uint8_t arrays as key, saves space compared to boolean array
+#include<Time.h>
 
-/* key length k (80 or 128) */
-const size_t secPar = 128;
+/*
+ * Version 2 with uint8_t arrays as key, saves space compared to boolean array
+ *
+ * Suggested parameter values (Armknecht et. al):
+ * 1: k = 512, e = 0.25, u = 0.348, n = 1164 ---- 12 seconds
+ * 2: k = 512, e = 0.125, u = 0.256, n = 441 ---- 5 seconds
+ * 3: k = 512, e = 0.125, u = 0.1875, n = 256 ---- //TODO implement version3
+ */
+
+/* key length k */
+const size_t k = 512;
 
 /* key size in Bytes */
-const size_t keySize = secPar/8;
+const size_t keySize = k/8; // = 64 for k = 512
 
 /* key in {0,1}^k */
 uint8_t key[keySize];
 
-/* epsilon in (0, 0.5), supports up to two decimals */
-float eps = 0.1;
+/* epsilon in (0, 0.5), supports up to three decimals*/
+float eps = 0.125;
 
-/* iterations n */
-int n = 100;
+/* acceptance threshold u in (epsilon, 0.5) */
+float u = 0.256;
+
+/* iterations n*/
+unsigned n = 441;
 
 void setup() {
 
   initializeKey();
   Serial.begin (9600) ;
-  delay(100);
+  while(!Serial) {;}
 }
 
 void loop() {
   Serial.print("Key of length ");
-  Serial.print(secPar);
+  Serial.print(k);
   Serial.println(": ");
   for(int i=keySize-1; i>=0; i--) {
     for(int j=0; j<8; j++) {
@@ -33,41 +45,52 @@ void loop() {
   }
   Serial.println();
 
-  hbTest();
-  delay(1000);
+  /* Average Time */
+  int sum = 0;
+
+  for(int i=0; i<10; i++) {
+    time_t t1 = now();
+    hbTest();
+    time_t t2 = now();
+    sum += t2 - t1;
+  }
+
+  Serial.print("Average of 10 Authentication: ");
+  Serial.print(sum/10);
+  Serial.println(" seconds");
+  Serial.println("==========================================================");
+
+  delay(100);
 }
 
 /*
- * HB protocol using either a random key or the true key with probability of 0.5 each.
+ * Simulation of HB protocol using either a random key or the true key with
+ * probability of 0.5 each.
  */
-void hbTest() {
+void hbTest()
+{
+  int counter = 0; // counter for unsuccessful iteration
 
-  /* counter for unsuccessful iteration */
-  int counter=0;
-
-  /* generate candidate key */
+  /* TAG: generate candidate key */
   uint8_t candidate[keySize];
-
   generateKey(&candidate[0]); //prints TRUE KEY or RANDOM KEY
 
   /* n iterations of HB */
   for(int i=0; i<n; i++) {
 
-    /* random challenge a in {0,1}^k */
-    uint8_t a[keySize];
+    uint8_t a[keySize]; // random challenge a in {0,1}^k
 
-    /* response z in {0, 1} */
-    boolean z;
+    boolean z; // response z in {0, 1}
 
-    /* choose random challenge a */
+    /* READER: choose random challenge a */
     for(int i=0; i<keySize; i++) {
       a[i] = random(256);
     }
 
-    /* get z as candidate*a XOR v */
+    /* TAG: get z as candidate*a XOR v */
     z = getZ(candidate, a, keySize);
 
-    /* check if z = candidate* XOR v ?= key*a */
+    /* READER: check if z = candidate* XOR v ?= key*a */
     if(z != dotProduct(key, a, keySize)) {
       counter++;
     }
@@ -76,7 +99,7 @@ void hbTest() {
 
   /* Print message depending on whether authentication was successful. */
   String s;
-  if(counter<=(eps*n)) {
+  if(counter<=(u*n)) {
     s = "Authentication ACCEPTED";
   }
   else
@@ -120,12 +143,13 @@ void initializeKey()
  }
 
 /*
- * Computes a noisy dot product of two vectors x and y in {0,1}^k mod 2 with probability eps of the result bit being flipped.
+ * Computes a noisy dot product of two vectors x and y in {0,1}^k mod 2 with
+ * probability eps of the result bit being flipped.
  */
 boolean getZ(uint8_t x[], uint8_t y[], size_t k)
 {
-  long rand = random (1, 100);
-  boolean v = rand < eps*100;
+  long rand = random (1, 1000);
+  boolean v = rand < eps*1000;
 
   boolean product = dotProduct(x, y, k);
 
@@ -137,7 +161,6 @@ boolean getZ(uint8_t x[], uint8_t y[], size_t k)
  */
 void generateKey(uint8_t *x)
 {
-
   long r = random(2);
 
   if(r == 0) {
