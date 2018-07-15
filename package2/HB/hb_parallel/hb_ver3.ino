@@ -1,19 +1,26 @@
-// Version 3 with parallelization (see auth-mac.pdf, p9, 10)
+/*
+ * Version 3 with parallelization (see auth-mac.pdf, p9, 10)
+ *
+ * Suggested parameter values:
+ * 1: k = 512, e = 0.25, n = 1164
+ * 2: k = 512, e = 0.125, n = 441
+ * 3: k = 512, e = 0.125, n = 256
+ */
 
-/* key length k (80 or 128) */
-const size_t secPar = 128; // = l
+/* key length k */
+const size_t k = 80; // = l
 
-/* key size in Bytes */
-const size_t keySize = secPar/8; // = 16 for secPar = 128
+/* key size in bytes */
+const size_t keySize = k/8; // = 16 for k = 128
 
 /* key in {0,1}^k */
 uint8_t key[keySize];
 
-/* epsilon in (0, 0.5), supports up to two decimals */
-float eps = 0.1;
+/* epsilon in (0, 0.5), supports up to three decimals */
+float eps = 0.125;
 
 /* iterations n */
-int n = 80;
+int n = 120;
 
 void setup() {
   initializeKey();
@@ -22,7 +29,7 @@ void setup() {
 
 void loop() {
   Serial.print("Key of length ");
-  Serial.print(secPar);
+  Serial.print(k);
   Serial.println(": ");
   printBitString(&key[0], keySize);
   Serial.println();
@@ -35,28 +42,25 @@ void loop() {
  * Simulation of HB protocol using either a random key or the true key with
  * probability of 0.5 each.
  */
-void hbTest() {
+void hbTest()
+{
+  int counter = 0; // counter for unsuccessful iteration
 
-  /* counter for unsuccessful iteration */
-  int counter=0;
-
-  /* generate candidate key */
+  /* READER: generate candidate key */
   uint8_t candidate[keySize];
+  generateKey(&candidate[0]); // prints TRUE KEY or RANDOM KEY
 
-  generateKey(&candidate[0]); //prints TRUE KEY or RANDOM KEY
+  uint8_t r[n][keySize]; // random challenges R in {0,1}^nxl
 
-  /* random challenges R in {0,1}^nxl each column being one challenge*/
-  uint8_t r[n][keySize];
-
+  /* READER: choose random challenges R */
   for(int i=0; i<n; i++) {
     for(int j=0; j<keySize; j++) {
       r[i][j] = random(256);
     }
   }
 
-  /* Calculate response vector z in {0,1}^n as z = r * candidate XOR e */
+  /* TAG: Calculate response vector z in {0,1}^n as z = R * candidate XOR e */
   size_t zsize = n/8 + ((n % 8) != 0);
-
   uint8_t z[zsize] = {0};
 
   for(int i=0; i<zsize; i++) {
@@ -73,7 +77,7 @@ void hbTest() {
     }
   }
 
-  /* check condition, increse counter if unsuccessful*/
+  /* READER: check condition, increse counter if unsuccessful*/
   for(int i=0; i<zsize; i++) {
     for(int j=0; j<8; j++) {
       if((i+1)*j < n) {
@@ -158,8 +162,8 @@ void printBitString(uint8_t *x, size_t k)
  */
 boolean getZ(uint8_t x[], uint8_t y[], size_t k)
 {
-  long rand = random (0, 100);
-  boolean v = rand < eps*100;
+  long rand = random (0, 1000);
+  boolean v = rand < eps*1000;
 
   boolean product = dotProduct(x, y, k);
 
