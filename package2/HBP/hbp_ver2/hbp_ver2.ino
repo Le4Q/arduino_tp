@@ -16,7 +16,7 @@ const size_t keyLength1 = 80;
 const size_t keyLength2 = 512;
 
 /* epsilon in (0, 0.5), supports up to two decimals */
-const float eps = 0.25;
+const float eps = 0.125;
 
 /* acceptance threshold u in (epsilon, 0.5) */
 const float u = 0.1875;

@@ -2,8 +2,8 @@
 
 /*
  * Suggested parameter values (Armknecht et. al):
- * 1: k = 512, e = 0.25, u = 0.348, n = 1164 ---- 12 seconds
- * 2: k = 512, e = 0.125, u = 0.256, n = 441 ---- 5 seconds
+ * 1: k = 512, e = 0.25, u = 0.348, n = 1164 ---- 12701ms (tag: 2577ms)
+ * 2: k = 512, e = 0.125, u = 0.256, n = 441 ---- 5246ms (tag: 976ms)
  * 3: k = 512, e = 0.125, u = 0.1875, n = 256 ---- 3 seconds (impl. in hb_ver2)
  */
 
@@ -71,10 +71,13 @@ void loop() {
 void hbTest()
 {
   int counter = 0; // counter for unsuccessful iteration
+  unsigned long time0, time1 = 0, time2 = 0, time3 = 0, time4 = 0, tmp1, tmp2;
 
   /* TAG: generate candidate key */
+  tmp1 = millis();
   uint8_t candidate[keySize];
   generateKey(&candidate[0]); //prints TRUE KEY or RANDOM KEY
+  tmp2 = millis(); time0 = tmp2-tmp1;
 
   /* n iterations of HB */
   for(int i=0; i<n; i++) {
@@ -84,19 +87,34 @@ void hbTest()
     boolean z; // response z in {0, 1}
 
     /* READER: choose random challenge a */
+    tmp1 = millis();
     for(int j=0; j<keySize; j++) {
       a[j] = random(256);
     }
+    tmp2 = millis(); time1 += tmp2-tmp1;
 
     /* TAG: get z as candidate*a XOR v */
+    tmp1 = millis();
     z = getZ(candidate, a, keySize);
+    tmp2 = millis(); time2 += tmp2-tmp1;
 
     /* READER: check if z = candidate* XOR v ?= key*a */
+    tmp1 = millis();
     if(z != dotProduct(key, a, keySize)) {
       counter++;
     }
+    tmp2 = millis(); time3 += tmp2-tmp1;
 
   }
+
+  Serial.print("Candidate Key generation: ");
+  Serial.println(time0);
+  Serial.print("Challenges generation: ");
+  Serial.println(time1);
+  Serial.print("Tagging: ");
+  Serial.println(time2);
+  Serial.print("Verification: ");
+  Serial.println(time3);
 
   /* Print message depending on whether authentication was successful. */
   String s;

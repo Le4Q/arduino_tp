@@ -2,8 +2,8 @@
 
 /*
  * Suggested parameter values (Armknecht et. al):
- * 1: k1 = 80, k2 = 512, e = 0.25, u = 0.348, n = 1164 ---- 14 seconds
- * 2: k1 = 80, k2 = 512, e = 0.125, u = 0.256, n = 441 ---- 6 seconds
+ * 1: k1 = 80, k2 = 512, e = 0.25, u = 0.348, n = 1164 ---- 14617ms (tag: 1077ms + 2904ms)
+ * 2: k1 = 80, k2 = 512, e = 0.125, u = 0.256, n = 441 ---- 6061ms (tag: 408ms + 1099ms)
  * 3: k1 = 80, k2 = 512, e = 0.125, u = 0.1875, n = 256 ----
  */
 
@@ -12,13 +12,13 @@ const size_t keyLength1 = 80;
 const size_t keyLength2 = 512;
 
 /* epsilon in (0, 0.5), supports up to two decimals */
-const float eps = 0.125;
+const float eps = 0.25;
 
 /* acceptance threshold u in (epsilon, 0.5) */
-const float u = 0.256;
+const float u = 0.348;
 
 /* iterations n */
-const size_t n = 441;
+const size_t n = 1164;
 
 /* ===================================================================== */
 
@@ -50,7 +50,20 @@ void setup() {
 
 void loop() {
 
-  hbpTest();
+  /* Average Time */
+  unsigned long sum = 0;
+
+  for(int i=0; i<10; i++) {
+    unsigned long t1 = millis();
+    hbpTest();
+    unsigned long t2 = millis();
+    sum += t2 - t1;
+  }
+
+  Serial.print("Average of 10 Authentication: ");
+  Serial.print(sum/10);
+  Serial.println(" ms");
+  Serial.println("==========================================================");
 
   delay(100);
 }
@@ -62,11 +75,14 @@ void loop() {
 void hbpTest()
 {
   int counter=0; // counter for unsuccessful iteration
+  unsigned long time0, time1 = 0, time2 = 0, time3 = 0, time4 = 0, tmp1, tmp2;
 
   /* TAG: generate candidate key */
+  tmp1 = millis();
   uint8_t candidate1[keySize1], candidate2[keySize2];
   generateKey1(&candidate1[0]); //prints TRUE KEY or RANDOM KEY
   generateKey2(&candidate2[0]);
+  tmp2 = millis(); time0 = tmp2-tmp1;
 
   /* n iterations of HB */
   for(int i=0; i<n; i++) {
@@ -78,24 +94,42 @@ void hbpTest()
     boolean z; // response z in {0, 1}
 
     /* TAG: choose random blinding factor b */
+    tmp1 = millis();
     for(int i=0; i<keySize1; i++) {
       b[i] = random(256);
     }
+    tmp2 = millis(); time1 += tmp2-tmp1;
 
     /* READER: choose random challenge a */
+    tmp1 = millis();
     for(int i=0; i<keySize2; i++) {
       a[i] = random(256);
     }
+    tmp2 = millis(); time2 += tmp2-tmp1;
 
     /* TAG: get z as candidate1*b XOR candidate2*a XOR v */
+    tmp1 = millis();
     z = dotProduct(candidate1, b, keySize1)^dotProduct(candidate2, a, keySize2)^generateNoiseBit();
+    tmp2 = millis(); time3 += tmp2-tmp1;
 
     /* READER: check if z = candidate1*b XOR candidate2*a XOR v ?= key1*b XOR key2*a */
+    tmp1 = millis();
     if(z != dotProduct(key1, b, keySize1)^dotProduct(key2, a, keySize2)) {
       counter++;
     }
-
+    tmp2 = millis(); time4 += tmp2-tmp1;
   }
+
+  Serial.print("Candidate Key generation: ");
+  Serial.println(time0);
+  Serial.print("Blinding factors generation: ");
+  Serial.println(time1);
+  Serial.print("Challenges generation: ");
+  Serial.println(time2);
+  Serial.print("Tagging: ");
+  Serial.println(time3);
+  Serial.print("Verification: ");
+  Serial.println(time4);
 
   /* Print message depending on whether authentication was successful. */
   String s;

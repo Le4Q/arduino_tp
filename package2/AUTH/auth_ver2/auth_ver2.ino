@@ -11,7 +11,7 @@
 const size_t l = 112;
 
 /* number of parallel iterations n <= l/2 */
-const unsigned n = 48;
+const size_t n = 48;
 
 /* parameter of Bernoulli distribution epsilon in (0, 0.5) */
 const float eps = 0.1;
