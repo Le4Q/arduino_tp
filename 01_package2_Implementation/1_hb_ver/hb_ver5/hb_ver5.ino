@@ -1,27 +1,21 @@
-#define nBytes n/8 + (n%8 != 0)
-
-#include<Time.h>
-
 /*
- * Improved version suggested by Gilbert et. al to use 3rd set of parameters.
- *
  * Suggested parameter values (Armknecht et. al):
- * 1: k = 512, e = 0.25, u = 0.348, n = 1164 ---- 12 seconds (impl. in hb)
- * 2: k = 512, e = 0.125, u = 0.256, n = 441 ---- 5 seconds (impl. in hb)
- * 3: k = 512, e = 0.125, u = 0.1875, n = 256 ---- 3 seconds
- * /
+ * 1: k = 512, e = 0.25, u = 0.348, n = 1164 ---- 12 seconds
+ * 2: k = 512, e = 0.125, u = 0.256, n = 441 ---- 5 seconds
+ * 3: k = 512, e = 0.125, u = 0.1875, n = 256 ---- 3 seconds (impl. in hb_ver2)
+ */
 
 /* key length k */
-const size_t k = 768;
+const size_t k = 1280;
 
 /* epsilon in (0, 0.5), supports up to three decimals*/
-float eps = 0.25;
+const float eps = 0.125;
 
 /* acceptance threshold u in (epsilon, 0.5) */
-float u = 0.3315;
+const float u = 0.232;
 
 /* iterations n*/
-unsigned n = 1494;
+const unsigned n = 574;
 
 /* ===================================================================== */
 
@@ -36,9 +30,7 @@ void setup() {
   initializeKey();
   Serial.begin (9600) ;
   while(!Serial) {;}
-}
 
-void loop() {
   Serial.print("Key of length ");
   Serial.print(k);
   Serial.println(": ");
@@ -48,21 +40,12 @@ void loop() {
     }
   }
   Serial.println();
+}
 
-  /* Average Time */
-  int sum = 0;
+void loop() {
 
-  for(int i=0; i<10; i++) {
- //   time_t t1 = now();
-    hbTest();
- //   time_t t2 = now();
- //   sum += t2 - t1;
-  }
 
-  Serial.print("Average of 10 Authentication: ");
-  Serial.print(sum/10);
-  Serial.println(" seconds");
-  Serial.println("==========================================================");
+  hbTest();
 
   delay(100);
 }
@@ -75,12 +58,9 @@ void hbTest()
 {
   int counter = 0; // counter for unsuccessful iteration
 
-  /* TAG: generate candidate key and noise bits*/
+  /* TAG: generate candidate key */
   uint8_t candidate[keySize];
-  uint8_t e[nBytes];
-
   generateKey(&candidate[0]); //prints TRUE KEY or RANDOM KEY
-  generateNoiseArray(&e[0], nBytes);
 
   /* n iterations of HB */
   for(int i=0; i<n; i++) {
@@ -95,8 +75,7 @@ void hbTest()
     }
 
     /* TAG: get z as candidate*a XOR v */
-    //z = getZ(candidate, a, keySize);
-    z = dotProduct(candidate, a, keySize)^getBit(e[i/8], i%8);
+    z = getZ(candidate, a, keySize);
 
     /* READER: check if z = candidate* XOR v ?= key*a */
     if(z != dotProduct(key, a, keySize)) {
@@ -135,21 +114,6 @@ void initializeKey()
 }
 
 /*
- * As suggested by Gilbert et. al, computes set of noise bits of length length
- * and keeps them only if the number of 1s is less than u*n.
- */
-void generateNoiseArray(uint8_t *x, size_t length) {
-
-  do {
-    for(int i=0; i<length; i++) {
-      for(int j=0; j<8; j++) {
-        setBit(&x[i], j, generateNoiseBit());
-      }
-    }
-  } while(hammingWeight(x, length) > u*n);
-}
-
-/*
  * Computes the dot product of two vectors x and y in {0,1}^k mod 2.
  */
  boolean dotProduct (uint8_t x[], uint8_t y[], size_t k)
@@ -164,6 +128,20 @@ void generateNoiseArray(uint8_t *x, size_t length) {
 
    return sum;
  }
+
+/*
+ * Computes a noisy dot product of two vectors x and y in {0,1}^k mod 2 with
+ * probability eps of the result bit being flipped.
+ */
+boolean getZ(uint8_t x[], uint8_t y[], size_t k)
+{
+  long rand = random (1, 1000);
+  boolean v = rand < eps*1000;
+
+  boolean product = dotProduct(x, y, k);
+
+  return product^v;
+}
 
 /*
  * Generates either a random key or true key with probability of 0.5 for each.
@@ -190,30 +168,6 @@ void generateKey(uint8_t *x)
     }
   }
   Serial.println();
-}
-
-/*
- * Returns Hamming Weight of uint8_t array x of length length.
- */
-int hammingWeight(uint8_t x[], size_t length) {
-  int sum = 0;
-  for(int i=0; i<length; i++) {
-    for(int j = 0; j<8; j++) {
-      sum += getBit(x[i], j);
-    }
-  }
-  return sum;
-}
-
-/*
- * Returns noise bit v with probability of eps of being 1 and probability 1-eps
- * of being 0.
- */
-boolean generateNoiseBit() {
-  long rand = random(100);
-  boolean v = rand < eps*100;
-
-  return v;
 }
 
 /*

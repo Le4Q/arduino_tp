@@ -38,9 +38,7 @@ void setup() {
   initializeKey();
   Serial.begin (9600) ;
   while(!Serial) {;}
-}
 
-void loop() {
   Serial.print("Key 1 of length ");
   Serial.print(keyLength1);
   Serial.println(": ");
@@ -60,20 +58,23 @@ void loop() {
     }
   }
   Serial.println();
+}
+
+void loop() {
 
   /* Average Time */
-  int sum = 0;
+  unsigned long sum = 0;
 
   for(int i=0; i<10; i++) {
-    time_t t1 = now();
+    unsigned long t1 = millis();
     hbpTest();
-    time_t t2 = now();
+    unsigned long t2 = millis();
     sum += t2 - t1;
   }
 
   Serial.print("Average of 10 Authentication: ");
   Serial.print(sum/10);
-  Serial.println(" seconds");
+  Serial.println(" ms");
   Serial.println("==========================================================");
 
   delay(100);

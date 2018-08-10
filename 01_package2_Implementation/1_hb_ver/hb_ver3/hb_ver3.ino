@@ -1,7 +1,5 @@
 #define nBytes n/8 + (n%8 != 0)
 
-#include<Time.h>
-
 /*
  * Improved version suggested by Gilbert et. al to use 3rd set of parameters.
  *
@@ -36,9 +34,7 @@ void setup() {
   initializeKey();
   Serial.begin (9600) ;
   while(!Serial) {;}
-}
 
-void loop() {
   Serial.print("Key of length ");
   Serial.print(k);
   Serial.println(": ");
@@ -48,21 +44,11 @@ void loop() {
     }
   }
   Serial.println();
+}
 
-  /* Average Time */
-  int sum = 0;
+void loop() {
 
-  for(int i=0; i<10; i++) {
- //   time_t t1 = now();
-    hbTest();
- //   time_t t2 = now();
- //   sum += t2 - t1;
-  }
-
-  Serial.print("Average of 10 Authentication: ");
-  Serial.print(sum/10);
-  Serial.println(" seconds");
-  Serial.println("==========================================================");
+  hbTest();
 
   delay(100);
 }

@@ -11,13 +11,13 @@
 const size_t k = 512;
 
 /* epsilon in (0, 0.5), supports up to three decimals*/
-const float eps = 0.125;
+const float eps = 0.25;
 
 /* acceptance threshold u in (epsilon, 0.5) */
-const float u = 0.256;
+const float u = 0.348;
 
 /* iterations n*/
-const unsigned n = 441;
+const unsigned n = 1164;
 
 /* ===================================================================== */
 

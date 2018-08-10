@@ -1,8 +1,4 @@
-#include<Time.h>
-
 /*
- * Version 2 with uint8_t arrays as key, saves space compared to boolean array
- *
  * Suggested parameter values (Armknecht et. al):
  * 1: k1 = 80, k2 = 512, e = 0.25, u = 0.348, n = 1164 ---- 14 seconds
  * 2: k1 = 80, k2 = 512, e = 0.125, u = 0.256, n = 441 ---- 6 seconds
@@ -13,6 +9,17 @@
 const size_t keyLength1 = 80;
 const size_t keyLength2 = 512;
 
+/* epsilon in (0, 0.5), supports up to two decimals */
+const float eps = 0.125;
+
+/* acceptance threshold u in (epsilon, 0.5) */
+const float u = 0.256;
+
+/* iterations n */
+const size_t n = 441;
+
+/* ===================================================================== */
+
 /* key sizes in Bytes */
 const size_t keySize1 = keyLength1/8;
 const size_t keySize2 = keyLength2/8;
@@ -20,57 +27,28 @@ const size_t keySize2 = keyLength2/8;
 /* keys in {0,1}^k */
 uint8_t key1[keySize1], key2[keySize2];
 
-/* epsilon in (0, 0.5), supports up to two decimals */
-const float eps = 0.25;
-
-/* acceptance threshold u in (epsilon, 0.5) */
-const float u = 0.348;
-
-/* iterations n */
-const unsigned n = 1164;
-
 void setup() {
-
   initializeKey();
+
   Serial.begin (9600) ;
   while(!Serial) {;}
-}
 
-void loop() {
   Serial.print("Key 1 of length ");
   Serial.print(keyLength1);
   Serial.println(": ");
-  for(int i=keySize1-1; i>=0; i--) {
-    for(int j=0; j<8; j++) {
-      Serial.print(!!((key1[i]<<j) & 0x80));
-    }
-  }
+  printBitString(&key1[0], keySize1);
   Serial.println();
 
   Serial.print("Key 2 of length ");
   Serial.print(keyLength2);
   Serial.println(": ");
-  for(int i=keySize2-1; i>=0; i--) {
-    for(int j=0; j<8; j++) {
-      Serial.print(!!((key2[i]<<j) & 0x80));
-    }
-  }
+  printBitString(&key2[0], keySize2);
   Serial.println();
+}
 
-  /* Average Time */
-  int sum = 0;
+void loop() {
 
-  for(int i=0; i<10; i++) {
-  //  time_t t1 = now();
-    hbTest();
-  //  time_t t2 = now();
-  //  sum += t2 - t1;
-  }
-
-  Serial.print("Average of 10 Authentication: ");
-  Serial.print(sum/10);
-  Serial.println(" seconds");
-  Serial.println("==========================================================");
+  hbpTest();
 
   delay(100);
 }
@@ -79,7 +57,7 @@ void loop() {
  * Simulation of HB+ protocol using either a random key or the true key with
  * probability of 0.5 each.
  */
-void hbTest()
+void hbpTest()
 {
   int counter=0; // counter for unsuccessful iteration
 
@@ -158,7 +136,7 @@ boolean dotProduct (uint8_t x[], uint8_t y[], size_t k)
 
  for(int i=0; i<k; i++) {
    for(int j=0; j<8; j++) {
-     sum ^= !!((x[i]<<j) & 0x80) & !!((y[i]<<j) & 0x80);
+     sum ^= getBit(x[i], j) & getBit(y[i], j);
    }
  }
 
@@ -182,19 +160,19 @@ void generateKey1(uint8_t *x)
 
   if(r == 0) {
     Serial.println("RANDOM KEY 1: ");
-    for(int i=keySize1-1; i>=0; i--) {
+    for(int i=0; i<keySize1; i++) {
       x[i] = random(256);
       for(int j=0; j<8; j++) {
-        Serial.print(!!((x[i]<<j) & 0x80));
+        Serial.print(getBit(x[i], j));
       }
     }
   }
   else {
     Serial.println("TRUE KEY 1: ");
-    for(int i=keySize1-1; i>=0; i--) {
+    for(int i=0; i<keySize1; i++) {
       x[i] = key1[i];
       for(int j=0; j<8; j++) {
-        Serial.print(!!((x[i]<<j) & 0x80));
+        Serial.print(getBit(x[i], j));
       }
     }
   }
@@ -210,21 +188,46 @@ void generateKey2(uint8_t *x)
 
   if(r == 0) {
     Serial.println("RANDOM KEY 2: ");
-    for(int i=keySize2-1; i>=0; i--) {
+    for(int i=0; i<keySize2; i++) {
       x[i] = random(256);
       for(int j=0; j<8; j++) {
-        Serial.print(!!((x[i]<<j) & 0x80));
+        Serial.print(getBit(x[i], j));
       }
     }
   }
   else {
     Serial.println("TRUE KEY 2: ");
-    for(int i=keySize2-1; i>=0; i--) {
+    for(int i=0; i<keySize2; i++) {
       x[i] = key2[i];
       for(int j=0; j<8; j++) {
-        Serial.print(!!((x[i]<<j) & 0x80));
+        Serial.print(getBit(x[i], j));
       }
     }
   }
   Serial.println();
+}
+
+/*
+ * Returns the bit of a byte x at position pos (0 = least significant).
+ */
+boolean getBit(uint8_t x, uint8_t pos) // 0<= pos <= 7
+{
+  return !!((x<<(7-pos)) & 0x80);
+}
+
+/*
+ * Sets the bit of x at position pos to value val.
+ */
+void setBit(uint8_t *x, uint8_t pos, boolean val)
+{
+  *x ^= (-val ^ *x) & (1UL << pos);
+}
+
+void printBitString(uint8_t *x, size_t k)
+{
+  for(int i=0; i<k; i++) {
+    for(int j=0; j<8; j++) {
+      Serial.print(getBit(x[i], j));
+    }
+  }
 }
