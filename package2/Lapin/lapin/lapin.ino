@@ -246,11 +246,6 @@ void toCRT(uint8_t result[5][16], uint8_t a[], size_t lenA)
   }
 }
 
-uint8_t* polyMod2(uint8_t n[], uint8_t d[], size_t lenN, size_t lenD)
-{
-
-}
-
 /*
  * Reduces polynomial n mod polynomial d and returns remainder polynomial.
  */
