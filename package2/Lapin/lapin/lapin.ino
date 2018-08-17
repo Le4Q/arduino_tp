@@ -251,7 +251,7 @@ void toCRT(uint8_t result[5][16], uint8_t a[], size_t lenA)
  */
 uint8_t* polyMod(uint8_t n[], uint8_t d[], size_t lenN, size_t lenD)
 {
-  uint8_t *result = new uint8_t[lenD];
+  uint8_t *result = new uint8_t;
 
   int degN = deg(n, lenN);
   int degD = deg(d, lenD);
@@ -265,7 +265,7 @@ uint8_t* polyMod(uint8_t n[], uint8_t d[], size_t lenN, size_t lenD)
     n0[i] = n[i];
   }
 
-  for(int iter = 0; iter <= degN-degD || deg(n0, len) >= degD; iter++) {
+  for(int iter = 0; iter <= degN-degD; iter++) {
 
     if(getBit(n0[len-1-(iter+(8-(degN+1)%8)%8)/8],
       7-(iter+(8-(degN+1)%8)%8)%8) == 1) {
@@ -294,13 +294,16 @@ uint8_t* polyMod(uint8_t n[], uint8_t d[], size_t lenN, size_t lenD)
       }
       //Serial.println();
     }
-
-    //iter++;
   }
 
-  for(int i=0; i<lenD; i++) {
+  //Serial.println(deg(n0, len));
+
+  for(int i=0; i<lenD+1; i++) {
     result[i] = n0[i];
+    //Serial.print(n0[i]);
+    //Serial.print(" ");
   }
+  //Serial.println();
 
   return result;
 }
