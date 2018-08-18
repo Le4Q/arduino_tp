@@ -91,7 +91,6 @@ void authTest() {
 
   // Compute R (R^T in the original version)
   uint8_t r[R][C];
-  //Serial.println("WHERE DID I GO WRONG");
 
   for(int i=0; i<R; i++) {
     for(int j=0; j<C; j++) {
@@ -99,7 +98,15 @@ void authTest() {
     }
   }
 
-  //Serial.println("I LOST A FRIEND");
+  // Compute e as Ber_eps^n
+  uint8_t e[nBytes];
+
+  for(int i=0; i<nBytes; i++) {
+    for(int j=0; j<8; j++) {
+      boolean v = generateNoiseBit();
+      setBit(&e[i], j, v);
+    }
+  }
 
   /* Compute candidate_v in {0,1}^l which is derived from the key candidate by
      deleting all entries candidate[i] where v[i] = 0.*/
@@ -112,10 +119,10 @@ void authTest() {
 
   matrixVectorProduct(&z[0], r, candidate_v);
 
-  for(int i=0; i<(nBytes); i++) {
-    boolean e = generateNoiseBit();
-    z[i] ^= e;
-      //setBit(&z[i], j, getBit(z[i], j) ^ e);
+  for(int i=0; i<nBytes; i++) {
+    for(int j=0; j<8; j++) {
+      setBit(&z[i], j, getBit(z[i], j) ^ getBit(e[i], j));
+    }
   }
 
   /* __________ VERIFIER __________ */
