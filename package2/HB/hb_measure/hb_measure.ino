@@ -1,5 +1,3 @@
-#include<Time.h>
-
 /*
  * Suggested parameter values (Armknecht et. al):
  * 1: k = 512, e = 0.25, u = 0.348, n = 1164 ---- 12701ms (tag: 2577ms)
@@ -71,7 +69,7 @@ void loop() {
 void hbTest()
 {
   int counter = 0; // counter for unsuccessful iteration
-  unsigned long time0, time1 = 0, time2 = 0, time3 = 0, time4 = 0, tmp1, tmp2;
+  unsigned long time0, time1 = 0, time2 = 0, time3 = 0, tmp1, tmp2;
 
   /* TAG: generate candidate key */
   tmp1 = millis();
