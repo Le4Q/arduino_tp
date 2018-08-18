@@ -2,8 +2,6 @@
 #define C keySize
 #define nBytes n/8 + (n%8 != 0)
 
-#include<Time.h>
-
 /*
  * Version with parallelization (see auth-mac.pdf, p9, 10)
  *
