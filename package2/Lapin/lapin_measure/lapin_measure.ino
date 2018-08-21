@@ -251,8 +251,9 @@ void sparsemult(uint8_t result[5][16], uint8_t a[5][16], uint8_t b[5][16])
  */
 void toCRT(uint8_t result[5][16], uint8_t a[], size_t lenA)
 {
-  uint8_t *result_ptr[5];
+  uint8_t **result_ptr = new uint8_t*[5]();
   for(int i=0; i<5; i++) {
+    result_ptr[i] = new uint8_t[16]();
     result_ptr[i] = polyMod(a, f_crt[i], lenA, 16);
   }
 
@@ -261,6 +262,11 @@ void toCRT(uint8_t result[5][16], uint8_t a[], size_t lenA)
       result[i][j] = result_ptr[i][j];
     }
   }
+
+  for(int i=0; i<16; i++) {
+    delete[] result_ptr[i];
+  }
+  delete[] result_ptr;
 }
 
 /*
@@ -268,7 +274,7 @@ void toCRT(uint8_t result[5][16], uint8_t a[], size_t lenA)
  */
 uint8_t* polyMod(uint8_t n[], uint8_t d[], size_t lenN, size_t lenD)
 {
-  uint8_t *result = new uint8_t;
+  uint8_t *result = new uint8_t();
 
   int degN = deg(n, lenN);
   int degD = deg(d, lenD);
@@ -317,7 +323,7 @@ uint8_t* polyMod(uint8_t n[], uint8_t d[], size_t lenN, size_t lenD)
 
   for(int i=0; i<lenD+1; i++) {
     result[i] = n0[i];
-    //Serial.print(n0[i]);
+    //Serial.print(result[i]);
     //Serial.print(" ");
   }
   //Serial.println();
