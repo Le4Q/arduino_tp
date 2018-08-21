@@ -1,0 +1,60 @@
+Map c to CRT form: 0
+Sample r: 9
+Sample e: 1556
+Tagging Time: 675
+Tagging done!
+Map c to CRT form: 0
+Sample r: 8
+Sample e: 1716
+Tagging Time: 681
+Tagging done!
+Map c to CRT form: 1
+Sample r: 9
+Sample e: 1566
+Tagging Time: 664
+Tagging done!
+Map c to CRT form: 0
+Sample r: 9
+Sample e: 1594
+Tagging Time: 634
+Tagging done!
+Map c to CRT form: 0
+Sample r: 9
+Sample e: 1581
+Tagging Time: 692
+Tagging done!
+Map c to CRT form: 0
+Sample r: 10
+Sample e: 1664
+Tagging Time: 651
+Tagging done!
+Map c to CRT form: 0
+Sample r: 9
+Sample e: 1688
+Tagging Time: 653
+Tagging done!
+Map c to CRT form: 0
+Sample r: 9
+Sample e: 1724
+Tagging Time: 632
+Tagging done!
+Map c to CRT form: 0
+Sample r: 9
+Sample e: 1583
+Tagging Time: 717
+Tagging done!
+Map c to CRT form: 0
+Sample r: 8
+Sample e: 1751
+Tagging Time: 672average of 10 rounds = 667 ms
+
+1.	Tagging Time: 675
+2.	Tagging Time: 681
+3.	Tagging Time: 664
+4.	Tagging Time: 634
+5.	Tagging Time: 692
+6.	Tagging Time: 651
+7.	Tagging Time: 653
+8.	Tagging Time: 632
+9.	Tagging Time: 717
+10.	Tagging Time: 672
