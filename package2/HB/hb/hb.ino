@@ -46,20 +46,7 @@ void setup() {
 
 void loop() {
 
-  /* Average Time */
-  long sum = 0;
-
-  for(int i=0; i<10; i++) {
-    unsigned long t1 = millis();
-    hbTest();
-    unsigned long t2 = millis();
-    sum += t2 - t1;
-  }
-
-  Serial.print("Average of 10 Authentication: ");
-  Serial.print(sum/10);
-  Serial.println(" ms");
-  Serial.println("==========================================================");
+  hbTest();
 
   delay(100);
 }
