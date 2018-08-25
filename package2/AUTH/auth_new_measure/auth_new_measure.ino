@@ -144,7 +144,7 @@ void authTest() {
       }
     }
 
-    // Compute e as Ber_eps^n
+    // Compute e as Ber_eps^m
     uint8_t e[bytesToSend];
 
     for(int i=0; i<bytesToSend; i++) {
@@ -180,7 +180,7 @@ void authTest() {
     uint8_t s_v[C];
     delete_v(s_v, s, v);
 
-    // Verifier rejects if rank(R) != n or wt(z XOR R^T * s_v) > n*eps_threshold)
+    // Verifier rejects if wt(z XOR R^T * s_v) > n*eps_threshold)
     uint8_t check[bytesToSend] = {0};
 
     matrixVectorProduct(check, r, s_v);

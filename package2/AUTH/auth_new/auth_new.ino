@@ -99,8 +99,6 @@ void authTest() {
 
   generateFixedHamNumber(&v[0], l);
 
-  /* __________ PROVER __________ */
-
   // Abort if Hamming Weight of v is not l
   if(hammingWeight(v, keySize, keySize*8) != l) {
     Serial.println("Abort, Hamming Weight of v is not l.");
@@ -128,6 +126,8 @@ void authTest() {
       bytesToSend = toSend/8 + (toSend%8 != 0);
     }
 
+    /* __________ TAG __________ */
+
     // Compute R (R^T in the original version)
     uint8_t r[bitsToSend][keySize/2];
 
@@ -137,7 +137,7 @@ void authTest() {
       }
     }
 
-    // Compute e as Ber_eps^n
+    // Compute e as Ber_eps^m
     uint8_t e[bytesToSend];
 
     for(int i=0; i<bytesToSend; i++) {
@@ -147,13 +147,11 @@ void authTest() {
       }
     }
 
-    /* Compute candidate_v in {0,1}^l which is derived from the key candidate by
-       deleting all entries candidate[i] where v[i] = 0.*/
+    // Compute candidate_v
     uint8_t candidate_v[C];
     delete_v(candidate_v, candidate, v);
 
-    /* Compute z = R^T * candidate_v XOR e in {0,1}^n with R^T in {0,1}^(nxl) and
-      candidate_v in {0,1}^l. */
+    // Compute z = R^T * candidate_v XOR e in {0,1}^m
     uint8_t z[bytesToSend] = {0};
 
     matrixVectorProduct(z, r, candidate_v);
@@ -171,7 +169,7 @@ void authTest() {
     uint8_t s_v[C];
     delete_v(s_v, s, v);
 
-    // Verifier rejects if rank(R) != n or wt(z XOR R^T * s_v) > n*eps_threshold)
+    // Verifier rejects if wt(z XOR R^T * s_v) > n*eps_threshold)
     uint8_t check[bytesToSend] = {0};
 
     matrixVectorProduct(check, r, s_v);
